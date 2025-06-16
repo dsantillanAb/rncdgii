@@ -1,5 +1,5 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import csv
@@ -11,6 +11,8 @@ import asyncio
 import ssl
 import certifi
 import logging
+import os
+from pathlib import Path
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -21,11 +23,14 @@ app = FastAPI(title="API de Consulta RNC")
 # Configurar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permite todas las origenes
+    allow_origins=["*"],  # Permite todos los orígenes
     allow_credentials=True,
     allow_methods=["*"],  # Permite todos los métodos
     allow_headers=["*"],  # Permite todos los headers
 )
+
+# Montar archivos estáticos desde el directorio actual
+app.mount("/static", StaticFiles(directory="."), name="static")
 
 # Variable global para almacenar los datos
 datos_rnc = []
@@ -101,6 +106,30 @@ async def startup_event():
     success = await cargar_archivo_desde_url()
     if not success:
         logger.error("No se pudieron cargar los datos al inicio")
+
+# Cargar el archivo HTML
+def get_html_content():
+    try:
+        with open("index.html", "r", encoding="utf-8") as f:
+            return f.read()
+    except Exception as e:
+        logger.error(f"Error al leer index.html: {e}")
+        return None
+
+@app.get("/", response_class=HTMLResponse)
+async def read_root():
+    html_content = get_html_content()
+    if html_content:
+        return html_content
+    raise HTTPException(status_code=500, detail="Error al cargar la página")
+
+@app.get("/index.html", response_class=HTMLResponse)
+async def read_index():
+    return await read_root()
+
+@app.get("/test")
+async def test():
+    return {"status": "ok", "datos_cargados": len(datos_rnc)}
 
 @app.get("/consultar-rnc/{rnc}")
 async def consultar_rnc(rnc: str):
@@ -192,11 +221,5 @@ async def recargar_datos():
 
 if __name__ == "__main__":
     import uvicorn
-    import os
-    # Intentar puerto 8000, si está ocupado usar 8001
-    try:
-        port = int(os.getenv("PORT", 8000))
-        uvicorn.run(app, host="0.0.0.0", port=port)
-    except OSError:
-        print("Puerto 8000 en uso, intentando con puerto 8001...")
-        uvicorn.run(app, host="0.0.0.0", port=8001) 
+    # Configuración para ejecutar en localhost
+    uvicorn.run(app, host="127.0.0.1", port=8000) 
