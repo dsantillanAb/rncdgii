@@ -52,7 +52,8 @@ python main.py
 ### 4. Situaciones Disponibles
 - **GET** `/situaciones-disponibles/`
 - Lista todas las situaciones disponibles en el sistema
-
+## Demostracion en linea - 
+http://34.71.208.58:8000
 ## Documentación
 
 La documentación interactiva de la API está disponible en:
