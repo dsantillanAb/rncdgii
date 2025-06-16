@@ -298,12 +298,76 @@
                     </table>
                 </div>
             </div>
+
+            <!-- Documentación -->
+            <div class="mt-5 pt-4 border-top">
+                <h3 class="text-center mb-4"><i class="fas fa-book me-2"></i>Documentación de la API</h3>
+                <div class="row justify-content-center">
+                    <div class="col-md-6">
+                        <div class="d-grid gap-3">
+                            <a href="/docs" target="_blank" class="btn btn-outline-primary btn-lg">
+                                <i class="fas fa-file-code me-2"></i>Documentación Swagger UI
+                            </a>
+                            <a href="/redoc" target="_blank" class="btn btn-outline-success btn-lg">
+                                <i class="fas fa-file-alt me-2"></i>Documentación ReDoc
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-5 pt-4 border-top">
+                <div class="row align-items-center">
+                    <div class="col-md-6 text-center text-md-start">
+                        <p class="mb-0">&copy; 2025 Kuenta ERP Consulting. Todos los derechos reservados.</p>
+                    </div>
+                    <div class="col-md-6 text-center text-md-end">
+                        <a href="https://x.com/danielgsp_" target="_blank" class="text-dark me-3" style="font-size: 1.5rem;">
+                            <i class="fab fa-x-twitter"></i>
+                        </a>
+                        <a href="https://github.com/dsantillanAb" target="_blank" class="text-dark" style="font-size: 1.5rem;">
+                            <i class="fab fa-github"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const API_URL = 'http://localhost:8000';
+        // Usar localhost para desarrollo local
+        const API_URL = 'http://34.71.208.58:8000';  // URL para desarrollo local
+
+        // Función para verificar si la API está disponible
+        async function verificarAPI() {
+            try {
+                const response = await fetch(`${API_URL}/test`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('API no disponible');
+                }
+                return true;
+            } catch (error) {
+                console.error('Error al conectar con la API:', error);
+                return false;
+            }
+        }
+
+        // Verificar la API al cargar la página
+        window.addEventListener('load', async () => {
+            const apiDisponible = await verificarAPI();
+            if (!apiDisponible) {
+                mostrarError('rncError', 'No se pudo conectar con el servidor. Por favor, intente más tarde.');
+            }
+        });
 
         function mostrarLoading(mostrar) {
             document.getElementById('loading').style.display = mostrar ? 'block' : 'none';
@@ -369,16 +433,23 @@
 
             mostrarLoading(true);
             try {
-                const response = await fetch(`${API_URL}/consultar-rnc/${rnc}`);
-                const data = await response.json();
-                
-                if (response.ok) {
-                    mostrarResultados(data);
-                } else {
-                    mostrarError('rncError', data.error || 'No se encontró el RNC');
+                const response = await fetch(`${API_URL}/consultar-rnc/${encodeURIComponent(rnc)}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Error al buscar el RNC');
                 }
+                const data = await response.json();
+                mostrarResultados(data);
             } catch (error) {
-                mostrarError('rncError', 'Error al conectar con el servidor');
+                console.error('Error en la búsqueda:', error);
+                mostrarError('rncError', error.message || 'Error al conectar con el servidor');
             } finally {
                 mostrarLoading(false);
             }
@@ -395,16 +466,23 @@
 
             mostrarLoading(true);
             try {
-                const response = await fetch(`${API_URL}/consultar-razon-social/${encodeURIComponent(razonSocial)}`);
-                const data = await response.json();
-                
-                if (response.ok) {
-                    mostrarResultados(data);
-                } else {
-                    mostrarError('razonSocialError', data.error || 'Error al buscar la Razón Social');
+                const response = await fetch(`${API_URL}/consultar-razon-social/${encodeURIComponent(razonSocial)}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Error al buscar la Razón Social');
                 }
+                const data = await response.json();
+                mostrarResultados(data);
             } catch (error) {
-                mostrarError('razonSocialError', 'Error al conectar con el servidor');
+                console.error('Error en la búsqueda:', error);
+                mostrarError('razonSocialError', error.message || 'Error al conectar con el servidor');
             } finally {
                 mostrarLoading(false);
             }
